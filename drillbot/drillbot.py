@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""This module contains a class for a drilldown menu bot."""
 
 import logging
 import os
