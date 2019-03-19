@@ -17,7 +17,7 @@ $ python examples/universalremotebot.py <token>
 
 You'll have to create a bot and get the token on your own. See here: [Telegram Bots FAQ - How do I create a bot?](https://core.telegram.org/bots/faq#how-do-i-create-a-bot)
 
-Note that the `telegram_drillbot` folder here is to simulate a submodule, and leads to a symlink of the drillbot code.
+Note that the `telegram_drillbot` folder is to simulate a submodule, and leads to a symlink of the drillbot code.
 
 ## Examples
 

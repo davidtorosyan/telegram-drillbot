@@ -11,7 +11,7 @@
 
 DrillBot (short for menu **drill**down **bot**) is a library to help create remote-control-like Telegram apps.
 
-Here's sample of the kind of bot you can create:
+Here's a sample of the kind of bot you can create:
 
 ![Demo: UniversalRemoteBot.py](https://github.com/davidtorosyan/telegram-drillbot/raw/master/examples/images/universalremotebot-lights.gif)
 
@@ -28,7 +28,7 @@ $ git submodule add https://github.com/davidtorosyan/telegram-drillbot telegram_
 
 ## Usage
 
-To create your bot, import `DrillBot` and create subclass.
+To create your bot, import `DrillBot` and create a subclass.
 
 ```py
 from telegram_drillbot.drillbot.drillbot import DrillBot
