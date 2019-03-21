@@ -170,8 +170,9 @@ class Machine():
 
     def reply(self, text):
         """Send a message."""
-        self.bot.send_message(chat_id=self.chat_id(), text=text)
-        self.info.keyboard_stale = True
+        if text:
+            self.bot.send_message(chat_id=self.chat_id(), text=text)
+            self.info.keyboard_stale = True
 
     def send_keyboard(self, title, menu_options, options=None):
         """Send an inline keyboard with commands.
