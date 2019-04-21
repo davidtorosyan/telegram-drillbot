@@ -23,9 +23,11 @@ class DrillBot():
         self.home_state = home_state
         self.transitions = transitions
         self.allowed_ids = None
+        self.admin_ids = None
         self.debug_state = home_state
         self.debug_data = {}
         self.updater = None
+        self.notify_auth_failure = False
 
     def start_bot(self):
         """Start the bot."""
@@ -46,9 +48,11 @@ class DrillBot():
         self.updater.start_polling()
         self.updater.idle()
 
-    def configure_auth(self, allowed_ids):
+    def configure_auth(self, allowed_ids, notify=False, admin_ids=None):
         """Optionally configure authentication by specifying allowed user ids."""
         self.allowed_ids = allowed_ids
+        self.notify_auth_failure = notify
+        self.admin_ids = admin_ids
 
     def configure_debug(self, state, data=None):
         """Optionally configure debug options for testing.
@@ -63,16 +67,20 @@ class DrillBot():
 
     # handlers
 
-    def _auth_layer(self, bot, update, user_data): #pylint: disable=unused-argument
+    def _auth_layer(self, bot, update, user_data):
         """Perform any authentication actions.
 
         Checks if a message is allowed by checking the user id.
         Only active if configure_auth is called.
         """
-        if self.allowed_ids and update.message.from_user.id not in self.allowed_ids:
+        machine = Machine(bot, update, user_data)
+        if self.allowed_ids and machine.user_id() not in self.allowed_ids:
             logger.warning("Blocked request from %s, not in allowed_ids %s",
-                           update.message.from_user.id,
+                           machine.user_id(),
                            self.allowed_ids)
+            if self.notify_auth_failure:
+                logger.info("Replying with access denied notification.")
+                machine.reply("You don't have access to this bot. To get access, ask the owner to whitelist your user id: {}".format(machine.user_id()))
             raise DispatcherHandlerStop
 
     def _setup_layer(self, bot, update, user_data): # pylint: disable=no-self-use
@@ -183,6 +191,12 @@ class DrillBot():
         Will begin in a different state with injected data, based on configure_debug.
         """
         machine = Machine(bot, update, user_data)
+        if self.admin_ids and machine.user_id() not in self.admin_ids:
+            logger.info("Rejecting /debug from user '%s' with id '%s'",
+                    machine.user_name(),
+                    machine.user_id())
+            machine.reply("Error: admin only operation.")
+            raise DispatcherHandlerStop
         machine.clear()
         machine.enable_debug(self.debug_data)
         logger.info("Received /debug from user '%s' with id '%s'",
@@ -195,6 +209,12 @@ class DrillBot():
     def _restart(self, bot, update, user_data):
         """Restart the bot."""
         machine = Machine(bot, update, user_data)
+        if self.admin_ids and machine.user_id() not in self.admin_ids:
+            logger.info("Rejecting /restart from user '%s' with id '%s'",
+                    machine.user_name(),
+                    machine.user_id())
+            machine.reply("Error: admin only operation.")
+            raise DispatcherHandlerStop
         logger.info("Received /restart from user '%s' with id '%s'",
                     machine.user_name(),
                     machine.user_id())
