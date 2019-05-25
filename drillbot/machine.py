@@ -4,6 +4,8 @@
 
 import time
 import logging
+from datetime import datetime
+from datetime import timedelta
 
 import telegram
 from telegram.ext import CommandHandler, MessageHandler, CallbackQueryHandler, Filters
@@ -21,6 +23,8 @@ HOME = -3
 
 KEYBOARD_DELAY_SECONDS = 0.5
 
+KEYBOARD_LIFETIME = timedelta(hours=46) # can't edit messages older than 48 hours
+
 class _MachineInfo():
     """An internal class for storing state."""
 
@@ -32,6 +36,7 @@ class _MachineInfo():
         self.debug_mode = False
         self.keyboard_id = None
         self.keyboard_stale = False
+        self.keyboard_date = None
 
     def __repr__(self):
         """Get the string representation of the state."""
@@ -189,6 +194,11 @@ class Machine():
                     for col in row]
                    for row in keyboard]
         reply_markup = telegram.InlineKeyboardMarkup(buttons)
+        # ignore keyboards sent too long ago to edit or delete
+        if self.info.keyboard_id:
+            keyboard_age = datetime.utcnow() - self.info.keyboard_date
+            if keyboard_age > KEYBOARD_LIFETIME:
+                self.info.keyboard_id = None
         # remove stale keyboard
         if self.info.keyboard_id and self.info.keyboard_stale:
             time.sleep(KEYBOARD_DELAY_SECONDS)
@@ -200,6 +210,7 @@ class Machine():
                                             text=text,
                                             reply_markup=reply_markup)
             self.info.keyboard_id = message.message_id
+            self.info.keyboard_date = datetime.utcnow()
             self.info.keyboard_stale = False
             return
         # edit
@@ -209,7 +220,7 @@ class Machine():
                                        text=text,
                                        reply_markup=reply_markup)
         except telegram.error.BadRequest as ex:
-            if str(ex) != "Message is not modified":
+            if "Message is not modified" not in str(ex):
                 raise
 
     def end_callback(self):
